@@ -8,13 +8,27 @@
     <!-- Favicon: Ícone de Caixa Azul (Identidade do Sistema) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E" />
     
-    <!-- Script para silenciar o aviso de produção do Tailwind neste ambiente de desenvolvimento -->
+    <!-- Script para silenciar o aviso de produção do Tailwind -->
     <script>
-      const originalWarn = console.warn;
-      console.warn = (...args) => {
-        if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-        originalWarn.apply(console, args);
-      };
+      (function() {
+        const originalWarn = console.warn;
+        const originalLog = console.log;
+        
+        const isTailwindWarning = (args) => {
+          return args && args[0] && typeof args[0] === 'string' && 
+            (args[0].includes('cdn.tailwindcss.com') || args[0].includes('production'));
+        };
+
+        console.warn = function(...args) {
+          if (isTailwindWarning(args)) return;
+          originalWarn.apply(console, args);
+        };
+        
+        console.log = function(...args) {
+          if (isTailwindWarning(args)) return;
+          originalLog.apply(console, args);
+        };
+      })();
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -43,15 +57,16 @@
   <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.1/client",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.1.0",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1",
+    "lucide-react": "https://esm.sh/lucide-react@0.294.0",
     "jspdf": "https://esm.sh/jspdf@2.5.1",
-    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/"
   }
 }
 </script>
