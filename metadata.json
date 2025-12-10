@@ -1,0 +1,5 @@
+{
+  "name": "Almoxarifado Digital",
+  "description": "Sistema completo de gestão de almoxarifado com controle de estoque, alertas de nível baixo, emissão de recibos de EPI e assistente de organização via IA.",
+  "requestFramePermissions": []
+}
