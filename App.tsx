@@ -108,6 +108,15 @@ const App: React.FC = () => {
     setInventory(prev => [...prev, newItem]);
   };
 
+  const handleUpdateProduct = (updatedItem: InventoryItem) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === updatedItem.id) {
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
   const handleZeroStock = (itemId: string) => {
     setInventory(prev => prev.map(item => {
       if (item.id === itemId) {
@@ -161,7 +170,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard items={inventory} />;
       case 'inventory':
-        return <InventoryList items={inventory} onAddProduct={handleAddProduct} onZeroStock={handleZeroStock} />;
+        return <InventoryList items={inventory} onAddProduct={handleAddProduct} onZeroStock={handleZeroStock} onUpdateProduct={handleUpdateProduct} />;
       case 'operations':
         return <StockOperations items={inventory} history={history} onUpdateStock={handleUpdateStock} />;
       case 'financial':

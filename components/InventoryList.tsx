@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { InventoryItem } from '../types';
-import { Search, Filter, AlertCircle, Plus, X, Save, MapPin, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Search, Filter, AlertCircle, Plus, X, Save, MapPin, RotateCcw, AlertTriangle, Edit2 } from 'lucide-react';
 
 interface InventoryListProps {
   items: InventoryItem[];
   onAddProduct: (item: InventoryItem) => void;
   onZeroStock: (itemId: string) => void;
+  onUpdateProduct: (item: InventoryItem) => void;
 }
 
-export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduct, onZeroStock }) => {
+export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduct, onZeroStock, onUpdateProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('Todas');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [zeroStockModal, setZeroStockModal] = useState<{ isOpen: boolean; itemId?: string; itemName?: string }>({ isOpen: false });
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // Form State
   const [newItemName, setNewItemName] = useState('');
@@ -72,6 +75,49 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
       onZeroStock(zeroStockModal.itemId);
       setZeroStockModal({ isOpen: false });
     }
+  };
+
+  const handleEditClick = (item: InventoryItem) => {
+    setEditingItem(item);
+    setNewItemName(item.name);
+    setNewItemCategory(item.category);
+    setNewItemMinStock(item.minStock.toString());
+    setNewItemUnit(item.unit);
+    setNewItemQuantity(item.quantity.toString());
+    setNewItemLocation(item.location);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingItem || !newItemName || !newItemCategory || !newItemMinStock || !newItemUnit || !newItemLocation) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const updatedItem: InventoryItem = {
+      ...editingItem,
+      name: newItemName,
+      category: newItemCategory,
+      quantity: parseInt(newItemQuantity) || 0,
+      minStock: parseInt(newItemMinStock) || 0,
+      unit: newItemUnit,
+      location: newItemLocation,
+      lastUpdated: new Date().toISOString()
+    };
+
+    onUpdateProduct(updatedItem);
+
+    // Reset Form
+    setNewItemName('');
+    setNewItemCategory('');
+    setNewItemMinStock('');
+    setNewItemUnit('un');
+    setNewItemQuantity('0');
+    setNewItemLocation('');
+    setEditingItem(null);
+    setIsEditModalOpen(false);
   };
 
   return (
@@ -162,6 +208,14 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button 
+                        onClick={() => handleEditClick(item)}
+                        className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200 text-xs font-medium mr-2"
+                        title="Editar produto"
+                      >
+                        <Edit2 size={14} />
+                        Editar
+                      </button>
+                      <button 
                         onClick={() => handleZeroStockClick(item.id, item.name)}
                         className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200 text-xs font-medium"
                         title="Zerar estoque"
@@ -212,6 +266,125 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO */}
+      {isEditModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-800">Editar Produto</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Nome do Produto *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: Luva de Raspa"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Categoria *</label>
+                  <input 
+                    type="text" 
+                    required
+                    list="categories-list-edit"
+                    placeholder="Ex: EPI"
+                    className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
+                    value={newItemCategory}
+                    onChange={(e) => setNewItemCategory(e.target.value)}
+                  />
+                  <datalist id="categories-list-edit">
+                    {Array.from(new Set(items.map(cat => cat.category))).map(cat => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Prateleira *</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Ex: A-10"
+                    className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
+                    value={newItemLocation}
+                    onChange={(e) => setNewItemLocation(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Unidade *</label>
+                  <select 
+                    className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
+                    value={newItemUnit}
+                    onChange={(e) => setNewItemUnit(e.target.value)}
+                  >
+                    <option value="un">Unidade (un)</option>
+                    <option value="par">Par</option>
+                    <option value="kg">Quilo (kg)</option>
+                    <option value="l">Litro (l)</option>
+                    <option value="cx">Caixa (cx)</option>
+                    <option value="m">Metro (m)</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Quantidade Atual</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
+                    value={newItemQuantity}
+                    onChange={(e) => setNewItemQuantity(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Estoque Mínimo *</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  required
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
+                  value={newItemMinStock}
+                  onChange={(e) => setNewItemMinStock(e.target.value)}
+                />
+                <p className="text-[10px] text-slate-500">Alerta de reposição será ativado abaixo deste valor.</p>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
+                >
+                  <Save size={18} />
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
