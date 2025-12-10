@@ -442,6 +442,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
                 </div>
             </div>
         )}
+      </div>
     </div>
   );
 };
