@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { InventoryItem } from '../types';
-import { Search, Filter, AlertCircle, Plus, X, Save, MapPin } from 'lucide-react';
+import { Search, Filter, AlertCircle, Plus, X, Save, MapPin, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface InventoryListProps {
   items: InventoryItem[];
   onAddProduct: (item: InventoryItem) => void;
+  onZeroStock: (itemId: string) => void;
 }
 
-export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduct }) => {
+export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduct, onZeroStock }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('Todas');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [zeroStockModal, setZeroStockModal] = useState<{ isOpen: boolean; itemId?: string; itemName?: string }>({ isOpen: false });
 
   // Form State
   const [newItemName, setNewItemName] = useState('');
@@ -59,6 +61,17 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
     setNewItemQuantity('0');
     setNewItemLocation('');
     setIsModalOpen(false);
+  };
+
+  const handleZeroStockClick = (itemId: string, itemName: string) => {
+    setZeroStockModal({ isOpen: true, itemId, itemName });
+  };
+
+  const confirmZeroStock = () => {
+    if (zeroStockModal.itemId) {
+      onZeroStock(zeroStockModal.itemId);
+      setZeroStockModal({ isOpen: false });
+    }
   };
 
   return (
@@ -113,6 +126,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
                 <th className="px-6 py-4 text-right">Qtd. Mínima</th>
                 <th className="px-6 py-4 text-center">Unidade</th>
                 <th className="px-6 py-4 text-right">Última Atualização</th>
+                <th className="px-6 py-4 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -146,6 +160,16 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
                     <td className="px-6 py-4 text-right text-slate-500 text-xs">
                       {new Date(item.lastUpdated).toLocaleDateString()}
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      <button 
+                        onClick={() => handleZeroStockClick(item.id, item.name)}
+                        className="inline-flex items-center gap-1 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200 text-xs font-medium"
+                        title="Zerar estoque"
+                      >
+                        <RotateCcw size={14} />
+                        Zerar
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -158,6 +182,39 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, onAddProduc
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMAÇÃO - ZERAR ESTOQUE */}
+      {zeroStockModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={32} className="text-orange-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Zerar Estoque?</h3>
+              <p className="text-slate-500 text-sm mb-6">
+                Tem certeza que deseja zerar o estoque de <span className="font-bold text-slate-700">"{zeroStockModal.itemName}"</span>? Esta ação não pode ser desfeita diretamente neste modal.
+              </p>
+              
+              <div className="flex gap-3 justify-center">
+                <button 
+                  onClick={() => setZeroStockModal({ isOpen: false })}
+                  className="px-5 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={confirmZeroStock}
+                  className="px-5 py-2.5 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 shadow-lg shadow-orange-500/30 transition-colors flex items-center gap-2 justify-center"
+                >
+                  <RotateCcw size={18} />
+                  Confirmar Zerar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE CADASTRO */}
       {isModalOpen && (

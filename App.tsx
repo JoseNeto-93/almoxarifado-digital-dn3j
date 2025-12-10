@@ -108,6 +108,15 @@ const App: React.FC = () => {
     setInventory(prev => [...prev, newItem]);
   };
 
+  const handleZeroStock = (itemId: string) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, quantity: 0, lastUpdated: new Date().toISOString() };
+      }
+      return item;
+    }));
+  };
+
   const handleRegisterInvoice = (record: FinancialRecord) => {
     // 1. Salvar Registro Financeiro
     setFinancialRecords(prev => [...prev, record]);
@@ -152,7 +161,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard items={inventory} />;
       case 'inventory':
-        return <InventoryList items={inventory} onAddProduct={handleAddProduct} />;
+        return <InventoryList items={inventory} onAddProduct={handleAddProduct} onZeroStock={handleZeroStock} />;
       case 'operations':
         return <StockOperations items={inventory} history={history} onUpdateStock={handleUpdateStock} />;
       case 'financial':
